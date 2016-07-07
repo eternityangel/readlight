@@ -1,0 +1,10 @@
+core
+*.core
+
+tags
+TAGS
+
+*.d
+*.s
+*.o
+applet/*.cpp
