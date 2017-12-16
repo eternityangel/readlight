@@ -2,75 +2,101 @@
 extern "C" {
 #endif
 
-#define BUTTON_PIN	2
+#include <stdint.h>
 
-#define RED_PIN		6
-#define GREEN_PIN	5
+#include <Adafruit_NeoPixel.h>
 
-enum LIGHT_STATES {
-	LIGHT_FULL_RED,
-	LIGHT_HALF_RG,
-	LIGHT_FULL_GREEN
-};
+#ifdef __AVR__
+  #include <avr/power.h>
+#endif
 
-enum BUTTON_STATE {
+#define NEOPIXEL_COUNT		1
+#define NEOPIXEL_CTL_PIN	2
+#define POTENTIOMETER_PIN	A3
+#define PUSH_BUTTON_PIN		5
+
+#define TIME_SPAN_MS		100
+
+enum button_state {
 	BUTTON_UP = LOW,
 	BUTTON_DOWN = HIGH
 };
 
-static int		lightstate = LIGHT_FULL_RED;
-static int		buttonstate = BUTTON_UP;
-static unsigned int	btnpresstart = 0;
+enum rgb_colors {
+	RED = 0xff0000,
+	GREEN = 0x00ff00,
+	BLUE = 0x0000ff
+};
+
+struct rgb_t {
+	uint32_t red;
+	uint32_t green;
+	uint32_t blue;
+};
+
+uint32_t	potentiometer_val = 0;
+unsigned long	prev_time = 0;
+enum rgb_colors chosen_color = RED;
+struct rgb_t	cur_color;
+
+Adafruit_NeoPixel pixel = Adafruit_NeoPixel(
+				NEOPIXEL_COUNT,
+				NEOPIXEL_CTL_PIN,
+				NEO_GRB + NEO_KHZ800);
 
 void
 setup(void)
 {
-	pinMode(RED_PIN, OUTPUT);
-	pinMode(GREEN_PIN, OUTPUT);
-	pinMode(BUTTON_PIN, INPUT);
-}
+	//Serial.begin(9600);
+	cur_color.red = 128;
 
-void
-light_states_transition(void)
-{
-	switch (lightstate) {
-	case LIGHT_FULL_RED:
-		analogWrite(RED_PIN, 0xff);
-		analogWrite(GREEN_PIN, 0x0);
-		lightstate = LIGHT_HALF_RG;
-		break;
-	case LIGHT_HALF_RG:
-		analogWrite(RED_PIN, 0x80);
-		analogWrite(GREEN_PIN, 0x80);
-		lightstate = LIGHT_FULL_GREEN;
-		break;
-	case LIGHT_FULL_GREEN:
-		analogWrite(RED_PIN, 0x0);
-		analogWrite(GREEN_PIN, 0xff);
-		lightstate = LIGHT_FULL_RED;
-		break;
-	}
+	pixel.begin();
+	pixel.show(); // Lights off
 }
 
 void
 loop(void)
 {
-	buttonstate = digitalRead(BUTTON_PIN);
-	switch (buttonstate) {
-	case BUTTON_UP:
-		//digitalWrite(RED_PIN, LOW);
-		//digitalWrite(GREEN_PIN, LOW);
-		btnpresstart = 0;
-		break;
-	case BUTTON_DOWN:
-		btnpresstart = 1;
-		light_states_transition();
-		delay(1000);
-		break;
+	int anal4read = analogRead(POTENTIOMETER_PIN);
+	int buttonstate = digitalRead(PUSH_BUTTON_PIN);
+
+	potentiometer_val = map(anal4read, 0, 1023, 0, 255);
+
+	if (buttonstate == BUTTON_DOWN
+	    && (millis() - prev_time) >= TIME_SPAN_MS) {
+
+		int blaa = millis() - prev_time;
+
+		switch (chosen_color) {
+		case RED:
+			chosen_color = GREEN;
+			break;
+		case GREEN:
+			chosen_color = BLUE;
+			break;
+		case BLUE:
+			chosen_color = RED;
+			break;
+		}
+		prev_time = millis();
+	} else {
+		switch (chosen_color) {
+		case RED:
+			cur_color.red = potentiometer_val;
+			break;
+		case GREEN:
+			cur_color.green = potentiometer_val;
+			break;
+		case BLUE:
+			cur_color.blue = potentiometer_val;
+			break;
+		}
 	}
+
+	pixel.setPixelColor(0, cur_color.red, cur_color.green, cur_color.blue);
+	pixel.show();
 }
 
 #ifdef __cplusplus
 }
 #endif
-
