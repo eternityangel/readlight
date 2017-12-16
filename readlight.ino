@@ -15,7 +15,7 @@ extern "C" {
 #define POTENTIOMETER_PIN	A3
 #define PUSH_BUTTON_PIN		5
 
-#define TIME_SPAN_MS		100
+#define TIME_SPAN_MS		1000
 
 enum button_state {
 	BUTTON_UP = LOW,
