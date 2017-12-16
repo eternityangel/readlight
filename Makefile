@@ -54,14 +54,12 @@ TARGET = ${.CURDIR:C/.*\///g}
 # working configurations, please feed them back to the OpenBSD porting team.
 
 ## you might use this for newer boards like the UNO
-UPLOAD_RATE = 115200
+UPLOAD_RATE = 57600
 PORT = /dev/cuaU0
-AVRDUDE_PROGRAMMER = avr109
-MCU = atmega32u4
+AVRDUDE_PROGRAMMER = arduino
+MCU = atmega328p
 F_CPU = 16000000
-VARIANT = leonardo
-
-OS_PATH	= "/usr/local/share/arduino"
+VARIANT = eightanaloginputs
 
 # If your sketch uses any libraries, list them here, eg.
 # LIBRARIES=EEPROM LiquidCrystal Wire
@@ -72,7 +70,7 @@ OS_PATH	= "/usr/local/share/arduino"
 #
 # To use the SD library:
 # LIBRARIES=SD File utility/SdFile utility/SdVolume utility/Sd2Card
-LIBRARIES=
+LIBRARIES=Adafruit_NeoPixel
 
 ############################################################################
 # Below here nothing should be changed...
@@ -83,7 +81,6 @@ AVR_TOOLS_PATH = /usr/local/bin
 SRC = wiring.c wiring_analog.c wiring_digital.c \
 wiring_pulse.c wiring_shift.c WInterrupts.c
 CXXSRC = HardwareSerial.cpp WMath.cpp Print.cpp WString.cpp \
-	 USBCore.cpp HID.cpp CDC.cpp \
 	${LIBRARIES:S|$|.cpp|g}
 FORMAT = ihex
 
@@ -98,8 +95,7 @@ DEBUG = stabs
 
 # C options
 COPT = s
-CDEFS = -DF_CPU=$(F_CPU) -DARDUINO=100 \
-	-DUSB_VID=0x2341 -DUSB_PID=0x00349
+CDEFS = -DF_CPU=$(F_CPU) -DARDUINO=100
 CINCS = -I$(ARDUINO)/cores/arduino $(LIBINC) \
 	-I$(ARDUINO)/variants/$(VARIANT)
 CSTANDARD = -std=gnu99
@@ -113,8 +109,7 @@ CFLAGS = $(CDEBUG) $(CDEFS) $(CINCS) -O$(OPT) $(CWARN) \
 
 # C++ options
 CXXOPT = ${COPT}
-CXXDEFS = -DF_CPU=$(F_CPU) -DARDUINO=100 \
-	  -DUSB_VID=0x2341 -DUSB_PID=0x00349
+CXXDEFS = -DF_CPU=$(F_CPU) -DARDUINO=100
 CXXINCS = ${CINCS}
 CXXSTANDARD =
 CXXDEBUG = ${CDEBUG}
@@ -165,6 +160,7 @@ LST = $(ASRC:.S=.lst) $(CXXSRC:.cpp=.lst) $(SRC:.c=.lst)
 ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS)
 ALL_CXXFLAGS = -mmcu=$(MCU) -I. $(CXXFLAGS)
 ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
+
 
 # Default target.
 all: applet_files build sizeafter
@@ -289,8 +285,5 @@ clean:
 	$(OBJ) $(LST) $(SRC:.c=.s) $(SRC:.c=.d) $(CXXSRC:.cpp=.s) $(CXXSRC:.cpp=.d) utility/*
 	if [ -d utility ]; then $(REMOVEDIR) utility; fi
 
-tags:
-	find ${OS_PATH} -type f -iname "*.[ch]" | ectags -R -L -
-
-.PHONY:	all build elf hex eep lss sym program coff extcoff clean applet_files sizebefore sizeafter tags
+.PHONY:	all build elf hex eep lss sym program coff extcoff clean applet_files sizebefore sizeafter
 
