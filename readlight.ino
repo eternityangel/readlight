@@ -65,8 +65,6 @@ loop(void)
 	if (buttonstate == BUTTON_DOWN
 	    && (millis() - prev_time) >= TIME_SPAN_MS) {
 
-		int blaa = millis() - prev_time;
-
 		switch (chosen_color) {
 		case RED:
 			chosen_color = GREEN;
